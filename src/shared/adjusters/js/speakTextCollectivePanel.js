@@ -23,6 +23,16 @@
                 url: "../../src/shared/adjusters/html/speakTextTemplate-keyEcho.html"
             }
         },
+        events: {
+            afterKeyEchoTemplateAppended: null
+        },
+        listeners: {
+            afterKeyEchoTemplateAppended: {
+                "this": "{that}.dom.keyEchoLabel",
+                "method": "text",
+                "args": ["Test"]
+            }
+        },
         selectors: {
             speakTextPresetButton: ".gpii-speakTextPresetButton",
             speakTextPresetButtonLabel: ".gpii-speakTextPresetButton-label",
@@ -113,6 +123,7 @@
     speakText.panels.CollectivePanel.finalInit = function (that) {
         fluid.fetchResources(that.options.resources, function () {
             that.container.append(that.options.resources.keyEcho.resourceText);
+            that.events.afterKeyEchoTemplateAppended.fire();
         });
 
         that.applier.modelChanged.addListener("speakTextPresetButton", function () {
