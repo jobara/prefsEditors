@@ -14,21 +14,14 @@ https://github.com/GPII/prefsEditors/LICENSE.txt
     fluid.defaults("gpii.prefsEditor", {
         gradeNames: ["fluid.prefs.GPIIEditor", "autoInit"],
         prefsEditor: {
-            gradeNames: ["fluid.prefs.stringBundle", "gpii.prefs.gpiiStore"],
+            gradeNames: ["fluid.prefs.stringBundle"/*, "gpii.prefs.gpiiStore"*/],
             members: {
                 messageResolver: "{prefsEditorLoader}.msgBundle"
             },
             events: {
                 onLogin: null,
                 onLogout: null,
-                onRequestPageTransition: null,
-                onPageTransition: {
-                    events: {
-                        onSetSuccess: "onSetSuccess",
-                        onRequestPageTransition: "onRequestPageTransition"
-                    },
-                    args: ["{that}"]
-                }
+                onRequestPageTransition: null
             },
             model: {
                 userLoggedIn: false
@@ -47,32 +40,27 @@ https://github.com/GPII/prefsEditors/LICENSE.txt
                     "method": "attr",
                     "args": ["value", "{that}.stringBundle.saveAndApplyText"]
                 },
-                "onReady.onApplySettings": {
+                "onReady.bindSaveAndApply": {
                     "this": "{that}.dom.saveAndApply",
                     "method": "click",
-                    "args": ["{that}.applySettings"]
+                    // currently this triggers a save,
+                    // which logs in and out to apply the settings.
+                    "args": ["{that}.saveSettings"]
                 },
                 "onReady.fullEditorLink": {
                     "this": "{that}.dom.fullEditorLink",
                     "method": "click",
                     "args": ["{that}.events.onRequestPageTransition.fire"]
                 },
-                "onRequestPageTransition.save": {
-                    listener: "{that}.saveSettings",
-                    args: ["{that}.model"]
-                },
-                /*
-                 * The URL is programmatically changed to prevent the page transitioning before
-                 * the asynchronous save procedure has completed.
-                 */
-                "onPageTransition.goToPMT": {
+                "onRequestPageTransition.save": "{that}.saveSettings",
+                "onRequestPageTransition.goToPMT": {
                     "funcName": "fluid.set",
                     "args": [window, "location.href", "{prefsEditorLoader}.options.pmtUrl"]
                 },
-                "onReady.setInitialModel": {
+                /*"onReady.setInitialModel": {
                     listener: "gpii.prefsEditor.setInitialModel",
                     args: ["{that}"]
-                },
+                },*/
                 "onLogin.setUserLoggedIn": {
                     listener: "{that}.applier.requestChange",
                     args: ["userLoggedIn", true]
@@ -122,7 +110,11 @@ https://github.com/GPII/prefsEditors/LICENSE.txt
                     "this": "{that}.dom.userStatusBar",
                     "method": "slideDown"
                 },
-                saveSettings: "{gpiiStore}.set"
+                saveSettings: {
+                    "func": "{gpiiStore}.set",
+                    "args": "{that}.model",
+                    "dynamic": true
+                }
             },
             selectors: {
                 saveAndApply: ".flc-prefsEditor-save",
@@ -139,10 +131,10 @@ https://github.com/GPII/prefsEditors/LICENSE.txt
         return window.location.search.substring(1);
     };
 
-    gpii.prefsEditor.setInitialModel = function (that) {
+    /*gpii.prefsEditor.setInitialModel = function (that) {
         var initialModel = that.get();
         that.applier.requestChange("", initialModel);
-    };
+    };*/
 
     gpii.applySettings = function (that) {
         var savedSettings = that.modelTransform(that.model);
@@ -166,5 +158,4 @@ https://github.com/GPII/prefsEditors/LICENSE.txt
     gpii.prefsEditor.triggerEvent = function (that, targetSelector, event) {
         that.locate(targetSelector).trigger(event);
     };
-
 })(jQuery, fluid);
